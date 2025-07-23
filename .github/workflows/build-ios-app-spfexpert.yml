@@ -13,30 +13,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Skip certificate and provisioning installation steps
-
-      - name: Build unsigned archive
+      - name: Build unsigned xcarchive
         run: |
-          xcodebuild -scheme "I am Groot" \
-            -archivePath $RUNNER_TEMP/iamgroot.xcarchive \
+          xcodebuild \
+            -scheme "I am Groot" \
             -sdk iphoneos \
             -configuration Debug \
-            -destination generic/platform=iOS \
+            -destination "generic/platform=iOS" \
+            -archivePath $RUNNER_TEMP/iamgroot.xcarchive \
             clean archive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Export unsigned ipa using local ExportOptions.plist
+      - name: Create unsigned IPA
         run: |
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/iamgroot.xcarchive \
-            -exportOptionsPlist ./ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/build
+          # Paths
+          APP_PATH="$RUNNER_TEMP/iamgroot.xcarchive/Products/Applications/I am Groot.app"
+          PAYLOAD_DIR="$RUNNER_TEMP/Payload"
+          IPA_PATH="$RUNNER_TEMP/IamGroot-unsigned.ipa"
 
-      - name: Upload unsigned Debug IPA
+          # Prepare Payload
+          mkdir -p "$PAYLOAD_DIR"
+          cp -r "$APP_PATH" "$PAYLOAD_DIR"
+
+          # Create unsigned ipa
+          cd "$RUNNER_TEMP"
+          zip -r "IamGroot-unsigned.ipa" Payload
+
+      - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: unsigned_debug_ipa
-          path: ${{ runner.temp }}/build/*.ipa
+          name: IamGroot-unsigned-ipa
+          path: ${{ runner.temp }}/IamGroot-unsigned.ipa
           retention-days: 3
