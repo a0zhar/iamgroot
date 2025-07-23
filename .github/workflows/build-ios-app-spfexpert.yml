@@ -57,7 +57,7 @@ jobs:
             )
 
       - name: Upload unsigned Debug ipa
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: unsigned_debug_ipa
           path: ${{ runner.temp }}/build/*.ipa
