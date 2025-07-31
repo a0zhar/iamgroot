@@ -48,7 +48,11 @@ import Foundation
     // Initialize function pointers
     @objc static func initXPCFunctions() {
         guard let libxpc = dlopen("/usr/lib/libxpc.dylib", RTLD_LAZY) else {
-            print("Failed to load libxpc.dylib: \(String(cString: dlerror() ?? "Unknown error"))")
+            var errorMessage = "Unknown error"
+            if let error = dlerror() {
+                errorMessage = String(cString: error)
+            }
+            print("Failed to load libxpc.dylib: \(errorMessage)")
             return
         }
 
@@ -98,7 +102,8 @@ import Foundation
         xpc_release_ptr?(value)
 
         var thread: pthread_t?
-        let threadResult = withUnsafeMutablePointer(to: &dict) { dictPtr in
+        var mutableDict = dict // Make dict mutable for withUnsafeMutablePointer
+        let threadResult = withUnsafeMutablePointer(to: &mutableDict) { dictPtr in
             pthread_create(&thread, nil, { arg in
                 guard let d = arg?.assumingMemoryBound(to: xpc_object_t.self).pointee else { return nil }
                 let val = xpc_dictionary_get_value_ptr?(d, "key")
