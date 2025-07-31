@@ -20,7 +20,7 @@ jobs:
           echo "CODE_SIGNING_ALLOWED = NO" >> BuildSettings.xcconfig
           echo "ARCHS = arm64" >> BuildSettings.xcconfig
           echo "OTHER_LDFLAGS = -framework Foundation -ldl" >> BuildSettings.xcconfig
-          echo "SWIFT_OBJC_BRIDGING_HEADER = I am Groot/I am Groot-Bridging-Header.h" >> BuildSettings.xcconfig
+          echo "GCC_PREPROCESSOR_DEFINITIONS = \$(inherited) HAVE_DLSYM=1" >> BuildSettings.xcconfig
 
       - name: Build unsigned xcarchive
         run: |
