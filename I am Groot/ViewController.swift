@@ -105,7 +105,7 @@ import Foundation
         var mutableDict = dict // Make dict mutable for withUnsafeMutablePointer
         let threadResult = withUnsafeMutablePointer(to: &mutableDict) { dictPtr in
             pthread_create(&thread, nil, { arg in
-                guard let d = arg?.assumingMemoryBound(to: xpc_object_t.self).pointee else { return nil }
+                let d = arg.assumingMemoryBound(to: xpc_object_t.self).pointee
                 let val = xpc_dictionary_get_value_ptr?(d, "key")
                 result = String(format: "Thread accessed value: %p", val ?? UnsafeMutableRawPointer(bitPattern: 0)!)
                 return nil
