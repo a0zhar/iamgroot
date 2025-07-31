@@ -8,19 +8,19 @@ import Foundation
     typealias xpc_object_t = UnsafeMutableRawPointer?
 
     struct OS_xpc_object {
-        var superclass_opaque: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
+        var superclass_opaque: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0)
     }
 
     struct OS_xpc_connection {
-        var super: OS_xpc_object
+        var `super`: OS_xpc_object
     }
 
     struct OS_xpc_dictionary {
-        var super: OS_xpc_object
+        var `super`: OS_xpc_object
     }
 
     struct OS_xpc_string {
-        var super: OS_xpc_object
+        var `super`: OS_xpc_object
     }
 
     // Function pointer types
