@@ -13,18 +13,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create xcconfig file
+        run: |
+          echo "CODE_SIGN_IDENTITY =" > BuildSettings.xcconfig
+          echo "CODE_SIGNING_REQUIRED = NO" >> BuildSettings.xcconfig
+          echo "CODE_SIGNING_ALLOWED = NO" >> BuildSettings.xcconfig
+          echo "ARCHS = arm64" >> BuildSettings.xcconfig
+          echo "OTHER_LDFLAGS = -framework Foundation -ldl" >> BuildSettings.xcconfig
+          echo "SWIFT_VERSION = 5.0" >> BuildSettings.xcconfig
+
       - name: Build unsigned xcarchive
         run: |
           xcodebuild \
+            -project "I am Groot.xcodeproj" \
             -scheme "I am Groot" \
             -sdk iphoneos \
             -configuration Debug \
             -destination "generic/platform=iOS" \
             -archivePath $RUNNER_TEMP/iamgroot.xcarchive \
-            clean archive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            -xcconfig BuildSettings.xcconfig \
+            clean archive
 
       - name: Create unsigned IPA
         run: |
